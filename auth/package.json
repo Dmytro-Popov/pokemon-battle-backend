@@ -11,6 +11,10 @@
     "#models": {
       "development": "./src/models/index.ts",
       "default": "./dist/models/index.js"
+    },
+    "#routes": {
+      "development": "./src/routes/index.ts",
+      "default": "./dist/routes/index.js"
     }
   },
   "scripts": {
