@@ -40,11 +40,7 @@
         "noUnusedLocals": true, // Error on unused local variables.
         // "noUnusedParameters": true, // Error on unused function parameters. Can be noisy in Express handlers.
         // "noEmit": true, // Use only if another tool emits JS, e.g. Vite/esbuild.
-        "paths": {
-            "#*": [
-                "./src/*"
-            ]
-        }
+      
         // Use "paths" only for TS/bundler aliases. For Node runtime aliases, prefer package.json "imports".
     },
     "include": [
