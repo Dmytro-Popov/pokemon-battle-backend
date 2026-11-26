@@ -1,16 +1,14 @@
 import mongoose from "mongoose";
 
 const MONGO_URI = process.env.MONGO_URI;
-
-if (!MONGO_URI) {
-  console.error("MONGO_URI is not defined");
-  process.exit(1);
-}
+const DB_NAME = process.env.DB_NAME;
 
 try {
   if (!MONGO_URI) throw new Error("MONGO_URI is not defined");
 
-  await mongoose.connect(MONGO_URI);
+  await mongoose.connect(MONGO_URI, {
+    dbName: DB_NAME
+  });
 
   console.log(`\x1b[35mMongoDB connected via Mongoose\x1b[0m`);
 } catch (err) {
