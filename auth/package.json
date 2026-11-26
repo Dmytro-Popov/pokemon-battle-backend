@@ -12,6 +12,18 @@
       "development": "./src/models/index.ts",
       "default": "./dist/models/index.js"
     },
+    "#controllers": {
+      "development": "./src/controllers/index.ts",
+      "default": "./dist/controllers/index.js"
+    },
+    "#errors": {
+      "development": "./src/errors/index.ts",
+      "default": "./dist/errors/index.js"
+    },
+    "#middleware": {
+      "development": "./src/middleware/index.ts",
+      "default": "./dist/middleware/index.js"
+    },
     "#routes": {
       "development": "./src/routes/index.ts",
       "default": "./dist/routes/index.js"
