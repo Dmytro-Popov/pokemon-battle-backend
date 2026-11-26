@@ -1,9 +1,9 @@
 import { Router } from "express"
-import { register } from "#controllers";
+import { login, register } from "#controllers";
 import { validateBody } from "#middleware";
-import { credentialSchema } from "#schemas";
+import { credentialSchema, loginSchema } from "#schemas";
 
 export const authRoutes = Router()
 
 authRoutes.post("/register", validateBody(credentialSchema), register)
-authRoutes.post("/login", () => { })
+authRoutes.post("/login", validateBody(loginSchema), login);
