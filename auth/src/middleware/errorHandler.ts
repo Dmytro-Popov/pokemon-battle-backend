@@ -27,7 +27,7 @@ export const errorHandler: ErrorRequestHandler = (
   if (error instanceof ZodError) {
     res.status(400).json({
       message: error.issues
-        .map((i) => `${i.path.join(".")}: {i.message}`)
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
         .join("; "),
     });
     return;
