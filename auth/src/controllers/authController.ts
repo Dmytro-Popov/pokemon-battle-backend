@@ -1,12 +1,12 @@
 import bcrypt from "bcrypt";
-import { AuthError } from "#errors";
+import { AuthError, NotFoundError } from "#errors";
 import { User } from "#models";
 import type { CredentialType, LoginType } from "#schemas";
 import type { RequestHandler } from "express";
 import { mongo } from "mongoose";
 import { createToken } from "#auth";
 
-type TokenResponse = { accessToken: string, username: string };
+type TokenResponse = { accessToken: string; username: string };
 
 export const register: RequestHandler<
   unknown,
@@ -49,13 +49,30 @@ export const login: RequestHandler<unknown, TokenResponse, LoginType> = async (
 ) => {
   const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).select("+passwordHash");
-  console.log(user)
+  const user = await User.findOne({ email }).select("+passwordHash");
 
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     throw new AuthError(401, "Email or password is invalid.");
   }
 
   const { accessToken } = await createToken(user);
-  res.json({ accessToken, username: user.username});
+  res.json({ accessToken, username: user.username });
 };
+
+export const me: RequestHandler = async (req, res) => { 
+    if (!req.user) { 
+        throw new AuthError(401, "Authentication required.");
+    }
+
+    console.log(req.user)
+
+    const user = await User.findById(req.user.id).select("email username")
+console.log(user)
+    if (!user) throw new NotFoundError("User");
+
+    res.json({
+        id: user._id.toHexString(),
+        email: user.email, 
+        username: user.username
+    })
+}
