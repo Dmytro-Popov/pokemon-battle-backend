@@ -22,7 +22,7 @@ export const requireAccessToken: RequestHandler = (req, res, next) => {
       error instanceof jwt.TokenExpiredError
         ? "Access token has expired."
         : "Access token is invalid.";
-    res.status(401).json({ message });
+   return res.status(401).json({ message });
   }
 
   const claims = accessClaimsSchema.safeParse(decoded);
