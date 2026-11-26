@@ -8,5 +8,11 @@ const password = z
     error: "Password must be at most 72 UTF-8 bytes long.",
   });
 
-export const credentialSchema = z.strictObject({email, password})
-export type CredentialType = z.infer<typeof credentialSchema>
+export const credentialSchema = z.strictObject({ email, password });
+export const loginSchema = z.strictObject({
+  email,
+  password: z.string().min(1, { error: "Password is required." }),
+});
+
+export type CredentialType = z.infer<typeof credentialSchema>;
+export type LoginType = z.infer<typeof loginSchema>;
