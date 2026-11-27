@@ -8,6 +8,8 @@ Node.js · TypeScript · Express 5 · Mongoose · `bcrypt` · `jsonwebtoken` · 
 
 ## Getting started
 
+Requires Node.js 22.18+ (or 24+): `npm run dev` runs the TypeScript sources directly with Node.
+
 ```bash
 cd auth
 npm install
