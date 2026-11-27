@@ -2,7 +2,7 @@
 
 Backend for the **Pokémon Battle** game: players register, build a roster, battle random Pokémon and compete on a leaderboard.
 
-This repository contains two independent Express + TypeScript services that share one MongoDB database and one JWT secret:
+This repository contains two independent Express + TypeScript services that use the same MongoDB cluster (each with its own collections) and share one JWT secret:
 
 | Service | Folder | Port | Responsibility |
 | --- | --- | --- | --- |
@@ -14,18 +14,23 @@ The frontend lives in a separate repository: [pokemon-battle-frontend](https://g
 ## How it fits together
 
 ```text
-┌──────────────┐  register / login / refresh   ┌──────────────┐
-│   Frontend   │ ────────────────────────────▶ │ Auth service │──┐
-│ React + Vite │ ◀──── access token (JWT) ──── │    :5002     │  │
-└──────┬───────┘     + refresh token cookie    └──────────────┘  │
-       │                                                         ▼
-       │  Authorization: Bearer <accessToken>             ┌────────────┐
-       └────────────────────────────────────────────────▶ │  MongoDB   │
-                         ┌──────────────┐                 │   Atlas    │
-                         │   Game API   │ ◀──────────────▶└────────────┘
-                         │    :5001     │
-                         └──────────────┘
+                     register / login / refresh
+              ┌────────────────────────────────────▶ ┌──────────────┐
+              │     access token (JWT) +             │ Auth service │ ──┐
+              │     refresh token cookie             │    :5002     │   │ users,
+              │ ◀──────────────────────────────────  └──────────────┘   │ refreshTokens
+┌─────────────┴┐                                                        ▼
+│   Frontend   │                                                 ┌────────────┐
+│ React + Vite │                                                 │  MongoDB   │
+└─────────────┬┘                                                 │   Atlas    │
+              │     Authorization: Bearer <accessToken>          └────────────┘
+              │ ────────────────────────────────────▶ ┌──────────────┐   ▲
+              │                                       │   Game API   │ ──┘ scores
+              │ ◀──────────────────────────────────── │    :5001     │
+              │              leaderboard              └──────────────┘
 ```
+
+The frontend never connects to MongoDB: only the two backend services do, each using its own collections.
 
 1. The frontend signs the user up or in through the **Auth service** and receives a short-lived **access token** (JWT, 15 min) in the response body and a long-lived **refresh token** (30 days) in an `httpOnly` cookie.
 2. The frontend sends the access token as `Authorization: Bearer <token>` to the **Game API**.
@@ -45,7 +50,8 @@ The frontend lives in a separate repository: [pokemon-battle-frontend](https://g
 
 ### Prerequisites
 
-- Node.js 20+ and npm
+- Node.js 22.18+ (or 24+) and npm — the auth service runs TypeScript directly in dev mode
+
 - A MongoDB Atlas cluster (or a local MongoDB instance)
 
 ### 1. Clone and install
