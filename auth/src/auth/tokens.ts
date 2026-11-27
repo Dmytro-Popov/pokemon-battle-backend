@@ -4,7 +4,7 @@ import jwt  from "jsonwebtoken";
 import { createHash, randomBytes } from "node:crypto";
 import { RefreshToken } from "#models";
 
-const ACCESS_TOKEN_SECONDS = 60;
+const ACCESS_TOKEN_SECONDS = 15 * 60;
 const REFRESH_TOKEN_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const REFRESH_COOKIE = "refreshToken";
