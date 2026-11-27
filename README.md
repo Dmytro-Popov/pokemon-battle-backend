@@ -1,155 +1,113 @@
-# Pokemon Battle Backend
+# Pokémon Battle — Backend
 
-Backend skeleton for the Pokemon Battle project. The API is built with Node.js, Express, Mongoose and MongoDB.
+Backend for the **Pokémon Battle** game: players register, build a roster, battle random Pokémon and compete on a leaderboard.
 
-## Technology stack
+This repository contains two independent Express + TypeScript services that share one MongoDB database and one JWT secret:
 
-- Node.js
-- TypeScript
-- Express
-- Mongoose
-- MongoDB
-- dotenv
-- CORS
-- tsx
+| Service | Folder | Port | Responsibility |
+| --- | --- | --- | --- |
+| **Auth service** | [`auth/`](./auth) | `5002` | Registration, login, refresh-token rotation, logout, current user |
+| **Game API** | [`api/`](./api) | `5001` | Leaderboard (read scores, add points for the authenticated user) |
 
-## Project status
+The frontend lives in a separate repository: [pokemon-battle-frontend](https://github.com/Dmytro-Popov/pokemon-battle-frontend).
 
-This repository currently contains the initial TypeScript backend skeleton. It includes a basic Express application, MongoDB connection setup and a health-check endpoint.
-
-Authentication, Mongoose models, leaderboard endpoints and route protection will be added during the next stages of development.
-
-## Requirements
-
-- Node.js
-- npm
-- MongoDB Atlas account or a local MongoDB instance
-
-## Installation
-
-```bash
-npm install
-```
-
-Create a local environment file based on the example:
-
-```bash
-cp .env.example .env
-```
-
-For Windows PowerShell, use:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Fill in the values in `.env`:
-
-```env
-PORT=5001
-MONGO_URI=
-JWT_SECRET=
-```
-
-Keep real credentials in `.env` only. The file is excluded from Git by `.gitignore`.
-
-In MongoDB Atlas:
-
-1. Create a database user in **Database Access**.
-2. Allow the local IP address in **Network Access**.
-3. Copy the connection string from **Database > Connect > Drivers**.
-4. Replace `USERNAME`, `PASSWORD`, `CLUSTER` and `DATABASE_NAME`.
-5. URL-encode special characters in the database password.
-
-## Running the server
-
-Development mode:
-
-```bash
-npm run dev
-```
-
-Build the TypeScript sources:
-
-```bash
-npm run build
-```
-
-Production mode:
-
-```bash
-npm start
-```
-
-By default, the server runs at `http://localhost:5001`.
-
-## Verify the setup
-
-Start the server and wait for:
+## How it fits together
 
 ```text
-Server running on port 5001
+┌──────────────┐  register / login / refresh   ┌──────────────┐
+│   Frontend   │ ────────────────────────────▶ │ Auth service │──┐
+│ React + Vite │ ◀──── access token (JWT) ──── │    :5002     │  │
+└──────┬───────┘     + refresh token cookie    └──────────────┘  │
+       │                                                         ▼
+       │  Authorization: Bearer <accessToken>             ┌────────────┐
+       └────────────────────────────────────────────────▶ │  MongoDB   │
+                         ┌──────────────┐                 │   Atlas    │
+                         │   Game API   │ ◀──────────────▶└────────────┘
+                         │    :5001     │
+                         └──────────────┘
 ```
 
-Then open:
+1. The frontend signs the user up or in through the **Auth service** and receives a short-lived **access token** (JWT, 15 min) in the response body and a long-lived **refresh token** (30 days) in an `httpOnly` cookie.
+2. The frontend sends the access token as `Authorization: Bearer <token>` to the **Game API**.
+3. The Game API verifies the token locally with the shared `JWT_SECRET` (algorithm `HS256`, issuer `pokemon-battle-auth`, audience `pokemon-battle-api`). It never talks to the Auth service directly.
+
+> Both services **must use the same `JWT_SECRET`**, otherwise every protected request returns `401`.
+
+## Tech stack
+
+- Node.js, TypeScript, Express 5
+- MongoDB Atlas + Mongoose
+- JSON Web Tokens (`jsonwebtoken`)
+- `bcrypt` for password hashing (auth service)
+- `zod` for input validation
+
+## Quick start
+
+### Prerequisites
+
+- Node.js 20+ and npm
+- A MongoDB Atlas cluster (or a local MongoDB instance)
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/Dmytro-Popov/pokemon-battle-backend.git
+cd pokemon-battle-backend
+
+(cd auth && npm install)
+(cd api && npm install)
+```
+
+### 2. Configure environment variables
+
+```bash
+cp auth/.env.example auth/.env
+cp api/.env.example api/.env
+```
+
+Fill in the values — see [`auth/README.md`](./auth/README.md#environment-variables) and [`api/README.md`](./api/README.md#environment-variables). Use the **same** `JWT_SECRET` in both files. Generate one with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+### 3. Run both services
+
+In two terminals:
+
+```bash
+cd auth && npm run dev   # http://localhost:5002
+cd api  && npm run dev   # http://localhost:5001
+```
+
+Check the Game API: `GET http://localhost:5001/health` → `{ "status": "ok" }`.
+
+## Endpoints at a glance
+
+| Service | Method | Path | Auth | Description |
+| --- | --- | --- | --- | --- |
+| Auth | `POST` | `/auth/register` | – | Create an account, returns access token |
+| Auth | `POST` | `/auth/login` | – | Log in, returns access token |
+| Auth | `POST` | `/auth/refresh` | refresh cookie | Rotate refresh token, returns a new access token |
+| Auth | `POST` | `/auth/logout` | refresh cookie | Invalidate the refresh token |
+| Auth | `GET` | `/auth/me` | Bearer | Current user profile |
+| API | `GET` | `/leaderboard` | – | Top 50 players by points |
+| API | `POST` | `/leaderboard` | Bearer | Add points for the authenticated user |
+| API | `GET` | `/health` | – | Health check |
+
+Full request/response details are in the per-service READMEs.
+
+## Repository layout
 
 ```text
-http://localhost:5001/health
+.
+├── api/      # Game API (leaderboard)
+│   └── src/{app,server}.ts, routes/, controllers/, models/, middleware/, schemas/, types/
+└── auth/     # Auth service
+    └── src/{app}.ts, routes/, controllers/, models/, middleware/, schemas/, errors/, auth/, db/
 ```
 
-A working server returns:
+## Team workflow
 
-```json
-{
-  "status": "ok"
-}
-```
-
-If MongoDB does not connect, check the `.env` credentials, Atlas network access and database user permissions.
-
-## API endpoints
-
-### Health check
-
-```http
-GET /health
-```
-
-Example response:
-
-```json
-{
-  "status": "ok"
-}
-```
-
-## Scripts
-
-| Script | Description |
-| --- | --- |
-| `npm run dev` | Starts the TypeScript server in watch mode |
-| `npm run build` | Compiles TypeScript into `dist/` |
-| `npm start` | Runs the compiled server |
-
-## Project structure
-
-```text
-src/
-  app.ts
-  server.ts
-dist/
-.env.example
-tsconfig.json
-package.json
-```
-
-## Planned functionality
-
-- User registration and login
-- JWT authentication
-- Protected API routes
-- Mongoose User and Score models
-- Leaderboard score creation
-- Descending leaderboard results
-- Server-side input validation
-- Friendly API error responses
+- All changes reach `main` through reviewed pull requests.
+- Never commit `.env` files — only `.env.example`.
