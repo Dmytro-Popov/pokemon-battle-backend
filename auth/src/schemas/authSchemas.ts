@@ -25,5 +25,10 @@ export const loginSchema = z.strictObject({
   password: z.string().min(1, { error: "Password is required." }),
 });
 
+export const refreshSchema = z.strictObject({
+  refreshToken: z.string({ error: "Refresh token is required" }).min(1),
+});
+
 export type CredentialType = z.infer<typeof credentialSchema>;
 export type LoginType = z.infer<typeof loginSchema>;
+export type RefreshType = z.infer<typeof refreshSchema>;
