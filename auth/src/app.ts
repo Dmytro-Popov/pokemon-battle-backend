@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 
@@ -16,6 +17,7 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? "")
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use("/auth", authRoutes)
 
